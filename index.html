@@ -17,7 +17,12 @@
   :root{
     --graphite:#15181C; --panel:#1E232A; --panel-2:#272E37; --line:#3A434F;
     --ink:#E8ECF1; --ink-dim:#93A0AF;
-    --signal:#D62828; --water:#2A7FBF; --hold:#E0A200; --dead:#6B7480; --ok:#3FA34D; --unknown:#7A5CA8;
+    --signal:#D62828;                      /* акцент интерфейса */
+    --st-ok:#1F7FD4;                       /* исправен — синий */
+    --st-bad:#D62828;                      /* неисправен — красный */
+    --st-new:#E8B008;                      /* не обследован — жёлтый */
+    --st-hold:#E8590C;                     /* ограниченно годен — оранжевый */
+    --dead:#6B7480; --ok:#3FA34D;
   }
   html,body{margin:0;padding:0}
   body{background:var(--graphite);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;
@@ -52,12 +57,13 @@
 
   .plate{display:grid;grid-template-columns:74px 1fr auto;gap:12px;align-items:center;background:var(--panel);
     border:1px solid var(--line);border-radius:4px;padding:10px;margin:10px 14px 0;cursor:pointer}
-  .plate .tag{background:var(--signal);border-radius:3px;padding:6px 4px;text-align:center;font-family:'Oswald',sans-serif;color:#fff;line-height:1}
-  .plate.water .tag{background:var(--water)}
-  .plate.bad .tag{background:var(--dead)}
-  .plate.hold .tag{background:var(--hold);color:#231A00}
-  .plate.newp .tag{background:var(--unknown)}
-  .plate.newp{border-left:3px solid var(--unknown)}
+  .plate .tag{background:var(--st-ok);border-radius:3px;padding:6px 4px;text-align:center;font-family:'Oswald',sans-serif;color:#fff;line-height:1}
+  .plate.st-bad  .tag{background:var(--st-bad)}
+  .plate.st-new  .tag{background:var(--st-new);color:#241C00}
+  .plate.st-hold .tag{background:var(--st-hold)}
+  .plate.st-bad {border-left:3px solid var(--st-bad)}
+  .plate.st-new {border-left:3px solid var(--st-new)}
+  .plate.st-hold{border-left:3px solid var(--st-hold)}
   .tag b{display:block;font-size:20px;letter-spacing:.08em}
   .tag i{display:block;font-style:normal;font-size:10.5px;opacity:.9;margin-top:3px}
   .meta{min-width:0}
@@ -65,8 +71,8 @@
   .meta .sub{font-size:12px;color:var(--ink-dim);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dist{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;text-align:right;line-height:1}
   .dist small{display:block;font-size:10px;font-weight:500;color:var(--ink-dim);letter-spacing:.1em}
-  .plate.bad{opacity:.5}
-  .warn{color:var(--hold)}
+  .plate.st-bad{opacity:.72}
+  .warn{color:var(--st-new)}   /* просроченная проверка — тем же жёлтым */
   .rowacts{display:flex;gap:8px;padding:8px 14px 0}
   .rowacts .btn{flex:1}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--panel-2);color:var(--ink);
@@ -89,6 +95,9 @@
   .filters{display:flex;flex-wrap:wrap;gap:8px;padding:10px 14px 0}
   .chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;color:var(--ink-dim);cursor:pointer;background:transparent}
   .chip[aria-pressed="true"]{background:var(--ink);color:var(--graphite);border-color:var(--ink);font-weight:600}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;padding:12px 14px 0;font-size:12px;color:var(--ink-dim)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .legend i{width:11px;height:11px;border-radius:2px;flex:none}
   .listhead{display:flex;justify-content:space-between;align-items:baseline;padding:14px 14px 0;
     font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
   .empty{padding:34px 20px;text-align:center;color:var(--ink-dim)}
@@ -153,6 +162,11 @@
     <button class="chip" id="f-ok" aria-pressed="true">скрыть неисправные</button>
     <button class="chip" id="f-pg" aria-pressed="true">ПГ</button>
     <button class="chip" id="f-pv" aria-pressed="true">водоёмы</button>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--st-ok)"></i>исправен</span>
+    <span><i style="background:var(--st-new)"></i>не обследован</span>
+    <span><i style="background:var(--st-bad)"></i>неисправен</span>
   </div>
   <div class="listhead"><span id="listtitle">Ближайшие источники</span><span id="cnt"></span></div>
   <div id="list"></div>
@@ -259,23 +273,6 @@
       <div class="rowacts" style="padding:6px 0 0"><button type="button" class="btn ghost" id="hardreset">Сбросить кеш и обновить приложение</button></div>
       <p class="note">Если на телефоне видна старая версия или старые данные, а на компьютере новые —
         нажмите эту кнопку. Внесённые вами точки сохранятся, заново скачаются только файлы приложения и карты.</p>
-    </fieldset>
-    <fieldset><legend>Загрузка из OpenStreetMap</legend>
-      <p class="note" style="margin-top:0">Забирает гидранты и водоисточники, внесённые в OpenStreetMap — в том числе то,
-        что вносили через Karta01. Точки приходят со статусом <b>«не обследован»</b>: координаты нужно
-        подтвердить на местности, состояние в OSM не хранится.</p>
-      <div class="rowacts" style="padding:8px 0 0;flex-wrap:wrap">
-        <button type="button" class="btn" id="osm-view">По видимой карте</button>
-        <button type="button" class="btn" id="osm-all">Весь Апшеронский район</button>
-      </div>
-      <p class="note" id="osmstate"></p>
-      <div class="rowacts" style="padding:8px 0 0;flex-wrap:wrap">
-        <button type="button" class="btn ghost" id="osm-turbo" hidden>Открыть запрос в overpass-turbo</button>
-        <button type="button" class="btn ghost" id="osm-copy">Скопировать запрос</button>
-      </div>
-      <p class="note">Если сервер недоступен из вашей сети: откройте запрос в overpass-turbo,
-        нажмите «Экспорт → данные → GeoJSON», сохраните файл и загрузите его кнопкой
-        «Загрузить файл» выше — результат будет тот же.</p>
     </fieldset>
   </form>
 </section>
@@ -465,14 +462,20 @@ function hint(){
     : mode==='aim' ? 'Нажмите место вызова — расстояния будут считаться от него.'
     : 'Нажатие на карту задаёт ваше положение, если GPS недоступен.';
 }
-function color(p){ if(p.status==='bad')return'#6B7480'; if(p.status==='hold')return'#E0A200';
-  if(p.status==='new')return'#7A5CA8'; return p.type==='ПГ'?'#D62828':'#2A7FBF' }
+/* цвет метки = состояние источника, одинаково для гидрантов и водоёмов */
+function color(p){
+  if(p.status==='bad')  return '#D62828';   // неисправен
+  if(p.status==='new')  return '#E8B008';   // не обследован
+  if(p.status==='hold') return '#E8590C';   // ограниченно годен
+  return '#1F7FD4';                         // исправен
+}
+function pinInk(p){ return p.status==='new' ? '#241C00' : '#fff' }
 function drawMarkers(){
   if(!layer)return; layer.clearLayers();
   points.forEach(function(p){
     var t=TYPE[p.type]||{lab:'?',full:p.type};
     var ic=L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,26],
-      html:'<div class="pin" style="background:'+color(p)+'"><b>'+t.lab+'</b></div>'});
+      html:'<div class="pin" style="background:'+color(p)+'"><b style="color:'+pinInk(p)+'">'+t.lab+'</b></div>'});
     L.marker([p.lat,p.lon],{icon:ic}).addTo(layer).bindPopup(
       '<div class="lp"><b>'+esc(label(p))+'</b><br>'+
       (p.dia?'Ø'+esc(p.dia)+' мм · ':'')+(p.net?esc(p.net)+' · ':'')+(p.vol?esc(p.vol)+' м³ · ':'')+stRu(p.status)+
@@ -516,7 +519,7 @@ function render(){
 
   box.innerHTML=rows.map(function(p){
     var t=TYPE[p.type]||{cls:'',lab:'?'};
-    var cls=p.status==='bad'?'bad':(p.status==='hold'?'hold':(p.status==='new'?'newp':t.cls));
+    var cls='st-'+(p.status||'ok');
     var d=daysSince(p.check);
     var chk = d==null?'проверка не отмечена':(d>CHECK_DAYS?'проверка просрочена ('+Math.floor(d/30)+' мес.)':'проверен '+d+' дн. назад');
     var sub=[p.dia?'Ø'+esc(p.dia):'',p.net||'',p.vol?esc(p.vol)+' м³':'',p.flow?esc(p.flow)+' л/с':'',stRu(p.status)].filter(Boolean).join(' · ');
@@ -730,14 +733,6 @@ function parseCSV(txt){
   return out;
 }
 /* ——— импорт из OpenStreetMap через Overpass API ——— */
-var APSH_BBOX=[43.95,39.25,44.70,40.10]; // юг, запад, север, восток
-var OVERPASS=[
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter', // зеркало VK — обычно доступно из РФ
-  'https://overpass-api.de/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.osm.jp/api/interpreter'
-];
 
 function osmType(t){
   var e=t.emergency||'', f=t['fire_hydrant:type']||'';
@@ -770,18 +765,6 @@ function osmNote(t){
 function near(lat,lon){
   return points.some(function(p){ return dist(p.lat,p.lon,lat,lon)<15 });
 }
-function osmQuery(bbox){
-  var b=bbox.join(',');
-  return '[out:json][timeout:90];('+
-    'node["emergency"="fire_hydrant"]('+b+');'+
-    'node["emergency"="water_tank"]('+b+');'+
-    'way["emergency"="water_tank"]('+b+');'+
-    'node["emergency"="fire_water_pond"]('+b+');'+
-    'way["emergency"="fire_water_pond"]('+b+');'+
-    'node["emergency"="suction_point"]('+b+');'+
-    'node["man_made"="water_tower"]('+b+');'+
-    ');out center tags;';
-}
 /* превращает ответ Overpass в наши записи */
 async function osmAbsorb(els){
   var added=0, dup=0;
@@ -806,68 +789,6 @@ async function osmAbsorb(els){
   await saveLocal(); drawMarkers(); render(); stats();
   return {added:added,dup:dup};
 }
-var lastQuery='';
-async function osmImport(bbox){
-  var q=lastQuery=osmQuery(bbox);
-  $('osm-turbo').hidden=false;
-
-  if(location.protocol==='file:'){
-    $('osmstate').innerHTML='Файл открыт с диска (file://) — браузер запрещает такие запросы. '+
-      'Загрузка из OSM работает только когда приложение открыто по адресу http/https, то есть после размещения на GitHub Pages. '+
-      'Пока можно воспользоваться кнопкой «Открыть запрос в overpass-turbo» ниже.';
-    return;
-  }
-
-  var log=[], data=null;
-  for(var i=0;i<OVERPASS.length && !data;i++){
-    var host=OVERPASS[i].split('/')[2];
-    $('osmstate').textContent='Запрос к '+host+'… ('+(i+1)+' из '+OVERPASS.length+')';
-    // сначала POST, затем GET — часть сетей и прокси режут POST
-    for(var m=0;m<2 && !data;m++){
-      try{
-        var r = m===0
-          ? await fetch(OVERPASS[i],{method:'POST',body:'data='+encodeURIComponent(q),
-              headers:{'Content-Type':'application/x-www-form-urlencoded'}})
-          : await fetch(OVERPASS[i]+'?data='+encodeURIComponent(q));
-        if(!r.ok){ log.push(host+': ответ '+r.status); continue }
-        data=await r.json();
-      }catch(e){
-        log.push(host+': '+(m===0?'POST':'GET')+' — '+(e&&e.message?e.message:'соединение не установлено'));
-      }
-    }
-  }
-
-  if(!data){
-    $('osmstate').innerHTML='Ни один сервер не ответил.<br><span style="opacity:.75">'+
-      esc(log.join(' · '))+'</span><br><br>Что попробовать: другая сеть (мобильный интернет вместо рабочего Wi-Fi), '+
-      'VPN, либо ручной путь — кнопка «Открыть запрос в overpass-turbo», там «Экспорт → скачать как GeoJSON/raw data», '+
-      'потом сюда через «Загрузить файл».';
-    toast('Импорт не выполнен');
-    return;
-  }
-
-  var res=await osmAbsorb(data.elements||[]);
-  $('osmstate').textContent='Загружено новых: '+res.added+'. Пропущено как дубли: '+res.dup+
-    '. Все новые точки помечены «не обследован» — подтвердите их при обходе.';
-  toast(res.added?('Добавлено источников: '+res.added):'Новых точек по этому участку в OSM нет');
-}
-$('osm-all').onclick=function(){ osmImport(APSH_BBOX) };
-$('osm-view').onclick=function(){
-  if(!map){ toast('Сначала откройте «Карта» и наведите на нужный участок'); return }
-  var b=map.getBounds();
-  osmImport([b.getSouth().toFixed(5),b.getWest().toFixed(5),b.getNorth().toFixed(5),b.getEast().toFixed(5)]);
-};
-$('osm-turbo').onclick=function(){
-  var q=lastQuery||osmQuery(APSH_BBOX);
-  window.open('https://overpass-turbo.eu/?Q='+encodeURIComponent(q)+'&R','_blank','noopener');
-};
-$('osm-copy').onclick=function(){
-  var q=lastQuery||osmQuery(APSH_BBOX);
-  if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(q).then(function(){toast('Запрос скопирован')},function(){prompt('Скопируйте запрос:',q)});
-  } else prompt('Скопируйте запрос:',q);
-};
-
 $('wipe').onclick=async function(){
   if(!confirm('Удалить все правки, сделанные на этом устройстве? Общая база останется.'))return;
   local={edits:{},deleted:[],added:[]}; await saveLocal(); merge(); drawMarkers(); render(); stats(); toast('Локальные правки сброшены');
@@ -877,7 +798,7 @@ $('center').onclick=function(){ if(me)map.setView([me.lat,me.lon],16); else toas
 $('fit').onclick=function(){ if(!points.length){map.setView(APSH,13);return}
   map.fitBounds(L.latLngBounds(points.map(function(p){return[p.lat,p.lon]})),{padding:[40,40]}) };
 
-var APP_VER='2026-08-24.7';
+var APP_VER='2026-08-27.1';
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js').then(function(reg){
